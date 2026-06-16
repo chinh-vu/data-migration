@@ -11,31 +11,36 @@
         },
         "postingperiod": {
             "required": false,
-            "data_format": "string"
+            "data_format": "date",
+            "format": "MMM/YYYY"
         },
         "tranDate": {
             "required": true,
-            "data_format": "string"
+            "data_format": "date",
+            "format": "mmddyyyy"
         },
         "reversalDate": {
             "required": false,
-            "data_format": "string"
+            "data_format": "date",
+            "format": "mm/dd/yyyy"
         },
         "isDeferred": {
             "required": false,
-            "data_format": "string"
+            "data_format": "boolean"
         },
         "journalItemLine_accountRef": {
             "required": true,
-            "data_format": "string"
+            "data_format": "string",
+            "format": "^[a-zA-Z0-9 .]+$",
+            "length": "100"
         },
         "journalItemLine_debitAmount": {
             "required": true,
-            "data_format": "string"
+            "data_format": "double"
         },
         "journalItemLine_creditAmount": {
             "required": true,
-            "data_format": "string"
+            "data_format": "double"
         },
         "journalItemLine_memo": {
             "required": false,
@@ -63,7 +68,7 @@
         },
         "journalItemLine_taxCodeAmount": {
             "required": false,
-            "data_format": "string"
+            "data_format": "double"
         }
     }
 }

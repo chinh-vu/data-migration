@@ -40,13 +40,13 @@ export default function EditInstruction() {
   function setDataFormat(colName, newFormat) {
     setInstruction(prev => {
       const old = prev.template[colName];
-      // Build a clean field, carrying over only relevant properties per type
       const field = { data_format: newFormat, required: old.required };
       if (newFormat === 'string' && old.length) field.length = old.length;
       if (newFormat === 'list') {
         field.reference = 'reference';
         if (old.values) field.values = old.values;
       }
+      if (newFormat === 'date' && old.format) field.format = old.format;
       return { ...prev, template: { ...prev.template, [colName]: field } };
     });
     setSaveStatus(null);
@@ -56,6 +56,15 @@ export default function EditInstruction() {
     setInstruction(prev => {
       const field = { ...prev.template[colName] };
       if (val) field.length = val; else delete field.length;
+      return { ...prev, template: { ...prev.template, [colName]: field } };
+    });
+    setSaveStatus(null);
+  }
+
+  function setFormat(colName, val) {
+    setInstruction(prev => {
+      const field = { ...prev.template[colName] };
+      if (val.trim()) field.format = val.trim(); else delete field.format;
       return { ...prev, template: { ...prev.template, [colName]: field } };
     });
     setSaveStatus(null);
@@ -152,7 +161,7 @@ export default function EditInstruction() {
                   <tr>
                     <th>Column</th>
                     <th>Type</th>
-                    <th>Max Length</th>
+                    <th>Max Length / Format</th>
                     <th>List Values</th>
                     <th className="col-required">Required</th>
                   </tr>
@@ -171,18 +180,40 @@ export default function EditInstruction() {
                           <option value="string">string</option>
                           <option value="boolean">boolean</option>
                           <option value="list">list</option>
+                          <option value="number">number</option>
+                          <option value="double">double</option>
+                          <option value="date">date</option>
                         </select>
                       </td>
 
                       <td>
                         {def.data_format === 'string' ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <input
+                              className="length-input"
+                              type="text"
+                              inputMode="numeric"
+                              value={def.length || ''}
+                              onChange={e => setLength(name, e.target.value.replace(/\D/g, ''))}
+                              placeholder="max length"
+                            />
+                            <input
+                              className="length-input"
+                              type="text"
+                              value={def.format || ''}
+                              onChange={e => setFormat(name, e.target.value)}
+                              placeholder="regex pattern"
+                              title="Regular expression to validate the value (e.g. email, phone)"
+                            />
+                          </div>
+                        ) : def.data_format === 'date' ? (
                           <input
                             className="length-input"
                             type="text"
-                            inputMode="numeric"
-                            value={def.length || ''}
-                            onChange={e => setLength(name, e.target.value.replace(/\D/g, ''))}
-                            placeholder="no limit"
+                            value={def.format || ''}
+                            onChange={e => setFormat(name, e.target.value)}
+                            placeholder="MM/DD/YYYY"
+                            style={{ width: 110 }}
                           />
                         ) : (
                           <span className="muted">—</span>

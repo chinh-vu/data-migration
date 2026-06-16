@@ -48,8 +48,9 @@ The UI is a five-tab single-page application.
 | FR-02 | Upload multiple template Excel files in one batch operation. |
 | FR-03 | The server reads only the first sheet of each template. |
 | FR-04 | Row 1 of the template sheet provides column attribute names (keys in the instruction JSON). |
-| FR-05 | Row 3 determines `data_format`: `Boolean` → `boolean`; otherwise `string`, unless row 4 contains `*Reference` → `list`. |
-| FR-06 | Row 4 provides `Max Length N` → `"length": "N"` and `*Reference` → `"reference": "reference"`. |
+| FR-05 | Row 3 is skipped. |
+| FR-06 | Row 4 (data validation) determines both the type and constraints for each column — case-insensitive: `Boolean` → `boolean`; `Date` → `date`; `*Reference` → `list`; `Number` / `Integer` → `number`; `Double` / `Decimal` / `Float` → `double`; `Max Length N` → `string` with `length: "N"`; otherwise `string`. |
+| FR-06a | Row 5 provides the date format for `date` columns (e.g. `MM/DD/YYYY`) → `"format": "MM/DD/YYYY"`. Ignored for all other column types. |
 | FR-07 | All generated fields default to `"required": false`. |
 | FR-08 | The `"file"` key in the output is an empty string for manual fill-in. |
 | FR-09 | The `instructions/` directory is created automatically if absent. |
@@ -208,9 +209,9 @@ data-migration/
 | --- | --- | --- |
 | 1 | Display attribute names | Column keys in the instruction JSON |
 | 2 | Internal NetSuite field IDs | Skipped |
-| 3 | Data types (`Text` / `List` / `Boolean`) | Sets `data_format` |
-| 4 | `Max Length N` / `*Reference` | Sets `length` / `reference` |
-| 5 | Descriptions | Ignored |
+| 3 | Skipped | — |
+| 4 | Data validation: type label + constraint (`Boolean`, `Date`, `*Reference`, `Max Length N`, `Number`, `Double`, etc.) | Sets `data_format`, `length`, `reference` |
+| 5 | Date format for `date` columns (e.g. `MM/DD/YYYY`) | Sets `format`; ignored for other types |
 
 ### 5.5 Duplicate-Key JSON Parsing
 

@@ -94,9 +94,9 @@ UI (Vite, port 5173) and server (nodemon, port 3001) run concurrently via `concu
 | --- | --- |
 | 1 | Column names — keys in the instruction JSON |
 | 2 | Internal NetSuite IDs — skipped |
-| 3 | Data type: `Boolean` → `boolean`; if row 4 contains `*Reference` → `list`; else `string` |
-| 4 | `Max Length N` → `"length": "N"` · `*Reference` → `"reference": "reference"` |
-| 5 | Descriptions — ignored |
+| 3 | Skipped |
+| 4 | Data validation: `Boolean` · `Date` · `Number` / `Integer` · `Double` / `Decimal` / `Float` · `*Reference` · `Max Length N` |
+| 5 | Date format for `date` columns (e.g. `MM/DD/YYYY`) — ignored for other types |
 
 ### Duplicate-key JSON parsing
 

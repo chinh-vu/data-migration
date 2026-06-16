@@ -26,7 +26,7 @@ router.post('/', upload.single('dataFile'), (req, res) => {
   }
 
   try {
-    const errors = validateData(instructionPath, req.file.buffer, req.file.originalname);
+    const { errors, warnings } = validateData(instructionPath, req.file.buffer, req.file.originalname);
 
     let logFile = null;
     if (errors.length > 0) {
@@ -37,12 +37,13 @@ router.post('/', upload.single('dataFile'), (req, res) => {
       const baseName = path.basename(req.file.originalname, path.extname(req.file.originalname));
       logFile = `${baseName}_error_${stamp}.logging`;
       const meta = { dataFile: req.file.originalname, instructionFile: safeName };
-      fs.writeFileSync(path.join(LOGGING_DIR, logFile), formatErrorLog(errors, meta), 'utf8');
+      fs.writeFileSync(path.join(LOGGING_DIR, logFile), formatErrorLog(errors, meta, warnings), 'utf8');
     }
 
     res.json({
       status: errors.length === 0 ? 'PASSED' : 'FAILED',
       errorCount: errors.length,
+      ...(warnings.length > 0 && { warnings }),
       ...(errors.length > 0 && { errors, logFile }),
     });
   } catch (err) {
