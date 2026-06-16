@@ -101,9 +101,11 @@ export default function ValidateData() {
             <span className={`badge ${result.status === 'PASSED' ? 'badge-pass' : 'badge-fail'}`}>
               {result.status}
             </span>
-            {result.errorCount > 0 && (
+            {(result.errorCount > 0 || (result.warnings && result.warnings.length > 0)) && (
               <span className="results-meta">
-                {result.errorCount} error{result.errorCount !== 1 ? 's' : ''}
+                {result.errorCount > 0 && <>{result.errorCount} error{result.errorCount !== 1 ? 's' : ''}</>}
+                {result.errorCount > 0 && result.warnings?.length > 0 && ' · '}
+                {result.warnings?.length > 0 && <>{result.warnings.length} warning{result.warnings.length !== 1 ? 's' : ''}</>}
                 {result.logFile && <> · log: <code>{result.logFile}</code></>}
               </span>
             )}
@@ -111,6 +113,22 @@ export default function ValidateData() {
 
           {result.status === 'PASSED' && (
             <div className="alert alert-success">No validation errors found.</div>
+          )}
+
+          {result.warnings && result.warnings.length > 0 && (
+            <div className="warning-list">
+              <div className="warning-list-header">
+                {result.warnings.length} header mismatch{result.warnings.length !== 1 ? 'es' : ''} — columns matched by position
+              </div>
+              {result.warnings.map((w, i) => (
+                <div key={i} className="warning-item">
+                  <span className="warning-col">Col {w.columnIndex}</span>
+                  <span className="warning-text">
+                    expected <code>{w.expected}</code> · found <code>{w.actual}</code>
+                  </span>
+                </div>
+              ))}
+            </div>
           )}
 
           {result.errors && (

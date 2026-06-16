@@ -969,3 +969,50 @@ main {
   background: #a01010;
   border-color: #a01010;
 }
+
+/* ── Validation warnings (header mismatches) ── */
+.warning-list {
+  border: 1px solid #f9a825;
+  border-radius: 4px;
+  background: #fffde7;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  overflow: hidden;
+}
+
+.warning-list-header {
+  padding: 0.55rem 0.9rem;
+  background: #fff8e1;
+  border-bottom: 1px solid #f9a825;
+  font-weight: 600;
+  color: #e65100;
+  font-size: 0.82rem;
+}
+
+.warning-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.4rem 0.9rem;
+  border-bottom: 1px solid #fff3cd;
+  color: #555;
+}
+
+.warning-item:last-child { border-bottom: none; }
+
+.warning-col {
+  flex-shrink: 0;
+  font-family: 'Consolas', monospace;
+  font-size: 0.78rem;
+  color: #888;
+  min-width: 42px;
+}
+
+.warning-text code {
+  font-family: 'Consolas', monospace;
+  font-size: 0.82rem;
+  background: #fff3cd;
+  padding: 0 3px;
+  border-radius: 2px;
+  color: #b45000;
+}
