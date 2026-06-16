@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build output
+ui/dist/
+
+# Authentication config (contains credentials)
+server/config/auth.json
+
+# Logs
+server/logging/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.env

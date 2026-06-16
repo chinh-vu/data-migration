@@ -1,0 +1,69 @@
+{
+    "file": "",
+    "template": {
+        "externalid": {
+            "required": true,
+            "data_format": "string"
+        },
+        "tranId": {
+            "required": false,
+            "data_format": "string"
+        },
+        "postingperiod": {
+            "required": false,
+            "data_format": "string"
+        },
+        "tranDate": {
+            "required": true,
+            "data_format": "string"
+        },
+        "reversalDate": {
+            "required": false,
+            "data_format": "string"
+        },
+        "isDeferred": {
+            "required": false,
+            "data_format": "string"
+        },
+        "journalItemLine_accountRef": {
+            "required": true,
+            "data_format": "string"
+        },
+        "journalItemLine_debitAmount": {
+            "required": true,
+            "data_format": "string"
+        },
+        "journalItemLine_creditAmount": {
+            "required": true,
+            "data_format": "string"
+        },
+        "journalItemLine_memo": {
+            "required": false,
+            "data_format": "string"
+        },
+        "journalItemLine_entityRef": {
+            "required": false,
+            "data_format": "string"
+        },
+        "journalItemLine_departmentRef": {
+            "required": false,
+            "data_format": "string"
+        },
+        "journalItemLine_classRef": {
+            "required": false,
+            "data_format": "string"
+        },
+        "journalItemLine_locationRef": {
+            "required": false,
+            "data_format": "string"
+        },
+        "journalItemLine_taxCodeRef": {
+            "required": false,
+            "data_format": "string"
+        },
+        "journalItemLine_taxCodeAmount": {
+            "required": false,
+            "data_format": "string"
+        }
+    }
+}

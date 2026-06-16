@@ -1,0 +1,29 @@
+{
+    "file": "",
+    "template": {
+        "External ID": {
+            "required": false,
+            "data_format": "string",
+            "length": "250"
+        },
+        "Bin Number": {
+            "required": false,
+            "data_format": "string",
+            "length": "20"
+        },
+        "Location": {
+            "required": false,
+            "data_format": "list",
+            "reference": "reference"
+        },
+        "Memo": {
+            "required": false,
+            "data_format": "string",
+            "length": "999"
+        },
+        "Inactive": {
+            "required": false,
+            "data_format": "boolean"
+        }
+    }
+}

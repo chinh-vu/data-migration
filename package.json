@@ -1,0 +1,11 @@
+{
+  "name": "netsuite-data-migration",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix ui\"",
+    "install:all": "npm install && npm install --prefix server && npm install --prefix ui"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

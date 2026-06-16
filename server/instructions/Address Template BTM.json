@@ -1,0 +1,80 @@
+{
+    "file": "",
+    "template": {
+        "Entity": {
+            "data_format": "string",
+            "required": false
+        },
+        "Label": {
+            "required": false,
+            "data_format": "string",
+            "length": "150"
+        },
+        "Attention": {
+            "required": false,
+            "data_format": "string",
+            "length": "150"
+        },
+        "Addressee": {
+            "required": false,
+            "data_format": "string",
+            "length": "100"
+        },
+        "Phone": {
+            "required": false,
+            "data_format": "string",
+            "length": "50"
+        },
+        "Address Line 1": {
+            "required": true,
+            "data_format": "string",
+            "length": "150"
+        },
+        "Address Line 2": {
+            "required": false,
+            "data_format": "string",
+            "length": "150"
+        },
+        "Address Line 3": {
+            "required": false,
+            "data_format": "string",
+            "length": "150"
+        },
+        "City": {
+            "required": true,
+            "data_format": "string",
+            "length": "50"
+        },
+        "State": {
+            "required": true,
+            "data_format": "string"
+        },
+        "Zip": {
+            "required": true,
+            "data_format": "string",
+            "length": "36"
+        },
+        "Country": {
+            "data_format": "list",
+            "required": true,
+            "reference": "reference",
+            "values": "US\nCAN\nVN"
+        },
+        "Default Shipping": {
+            "required": false,
+            "data_format": "boolean"
+        },
+        "Default Billing": {
+            "required": false,
+            "data_format": "boolean"
+        },
+        "Residential Address": {
+            "required": false,
+            "data_format": "boolean"
+        },
+        "Home": {
+            "required": false,
+            "data_format": "boolean"
+        }
+    }
+}
