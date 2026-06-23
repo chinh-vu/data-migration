@@ -3,21 +3,29 @@ const path = require('path');
 const { parseInstructionFile } = require('./parseInstruction');
 
 const BOOLEAN_VALUES = new Set(['true', 'false', 'yes', 'no', 't', 'f', '1', '0']);
+const MONTH_ABBREVS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 
 function extractDateParts(fmt, value, sep) {
   let day, month, year;
   if (sep) {
     const fParts = fmt.split(sep);
     const vParts = value.split(sep);
-    if (fParts.length !== 3 || vParts.length !== 3) return null;
-    for (let i = 0; i < 3; i++) {
+    if (fParts.length !== vParts.length) return null;
+    for (let i = 0; i < fParts.length; i++) {
       const token = fParts[i].toUpperCase();
-      const num = parseInt(vParts[i], 10);
-      if (isNaN(num)) return null;
-      if (token === 'DD' || token === 'D') day = num;
-      else if (token === 'MM' || token === 'M') month = num;
-      else if (token === 'YYYY') year = num;
-      else if (token === 'YY') year = num < 100 ? 2000 + num : num;
+      const vPart = vParts[i];
+      if (token === 'MMM') {
+        const idx = MONTH_ABBREVS.indexOf(vPart.toLowerCase());
+        if (idx === -1) return null;
+        month = idx + 1;
+      } else {
+        const num = parseInt(vPart, 10);
+        if (isNaN(num)) return null;
+        if (token === 'DD' || token === 'D') day = num;
+        else if (token === 'MM' || token === 'M') month = num;
+        else if (token === 'YYYY') year = num;
+        else if (token === 'YY') year = num < 100 ? 2000 + num : num;
+      }
     }
   } else {
     // No separator — parse positionally by token width
@@ -26,22 +34,30 @@ function extractDateParts(fmt, value, sep) {
     while (fi < f.length && pos < value.length) {
       let type, len;
       if (f.slice(fi, fi + 4) === 'YYYY')      { type = 'YYYY'; len = 4; fi += 4; }
+      else if (f.slice(fi, fi + 3) === 'MMM')  { type = 'MMM';  len = 3; fi += 3; }
       else if (f.slice(fi, fi + 2) === 'MM')   { type = 'MM';   len = 2; fi += 2; }
       else if (f.slice(fi, fi + 2) === 'DD')   { type = 'DD';   len = 2; fi += 2; }
       else if (f.slice(fi, fi + 2) === 'YY')   { type = 'YY';   len = 2; fi += 2; }
       else if (f[fi] === 'M')                   { type = 'M';    len = 1; fi += 1; }
       else if (f[fi] === 'D')                   { type = 'D';    len = 1; fi += 1; }
       else { fi++; continue; }
-      const num = parseInt(value.slice(pos, pos + len), 10);
-      if (isNaN(num)) return null;
-      if (type === 'DD' || type === 'D') day = num;
-      else if (type === 'MM' || type === 'M') month = num;
-      else if (type === 'YYYY') year = num;
-      else if (type === 'YY') year = num < 100 ? 2000 + num : num;
+      if (type === 'MMM') {
+        const abbrev = value.slice(pos, pos + len).toLowerCase();
+        const idx = MONTH_ABBREVS.indexOf(abbrev);
+        if (idx === -1) return null;
+        month = idx + 1;
+      } else {
+        const num = parseInt(value.slice(pos, pos + len), 10);
+        if (isNaN(num)) return null;
+        if (type === 'DD' || type === 'D') day = num;
+        else if (type === 'MM' || type === 'M') month = num;
+        else if (type === 'YYYY') year = num;
+        else if (type === 'YY') year = num < 100 ? 2000 + num : num;
+      }
       pos += len;
     }
   }
-  if (day == null || month == null || year == null) return null;
+  if (month == null || year == null) return null;
   return { day, month, year };
 }
 
@@ -54,6 +70,8 @@ function isValidDate(value, format) {
   const parts = extractDateParts(format, value, sep);
   if (!parts) return false;
   const { day, month, year } = parts;
+  if (month < 1 || month > 12 || year < 1) return false;
+  if (day == null) return true;
   const d = new Date(year, month - 1, day);
   return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day;
 }
@@ -208,6 +226,35 @@ function validateData(instructionPath, dataBuffer, dataFilename) {
             }
           } catch { /* invalid regex in instruction — skip */ }
         }
+      }
+
+      // Conditional required: field is required only when another column has a specific value
+      if (col.required_if && !missingRequired.includes(name)) {
+        const condCol = col.required_if.column;
+        const condVal = String(col.required_if.value ?? '');
+        if ((record[condCol] ?? '').toLowerCase() === condVal.toLowerCase() && value === '') {
+          errors.push({
+            recordNumber: recordNum,
+            attribute: name,
+            message: `Row ${recordNum}, '${name}': required when '${condCol}' is '${condVal}'`,
+            record,
+          });
+        }
+      }
+    }
+
+    // Exclusive-column constraints: if A has a value, B must be empty (and vice versa)
+    for (const col of columns) {
+      if (!col.exclusive_with) continue;
+      const valA = record[col.name] ?? '';
+      const valB = record[col.exclusive_with] ?? '';
+      if (valA !== '' && valB !== '') {
+        errors.push({
+          recordNumber: recordNum,
+          attribute: col.name,
+          message: `Row ${recordNum}, '${col.name}': '${col.name}' and '${col.exclusive_with}' are mutually exclusive — only one can have a value`,
+          record,
+        });
       }
     }
   }

@@ -35,12 +35,14 @@
             "length": "100"
         },
         "journalItemLine_debitAmount": {
-            "required": true,
-            "data_format": "double"
+            "required": false,
+            "data_format": "double",
+            "exclusive_with": "journalItemLine_creditAmount"
         },
         "journalItemLine_creditAmount": {
-            "required": true,
-            "data_format": "double"
+            "required": false,
+            "data_format": "double",
+            "exclusive_with": "journalItemLine_debitAmount"
         },
         "journalItemLine_memo": {
             "required": false,
@@ -59,8 +61,10 @@
             "data_format": "string"
         },
         "journalItemLine_locationRef": {
-            "required": false,
-            "data_format": "string"
+            "data_format": "list",
+            "required": true,
+            "reference": "reference",
+            "values": "LOC_HOME_OFF\nLOC_RTL_WH_OUTG_950\nLOC_RTL_WH_OUTG_955\nLOC_RTL_WH_OUTG_960\nLOC_RTL_WH_OUTG_961\nLOC_RTL_WH_OUTG_963\nLOC_RTL_WH_ING_980\nLOC_RTL_WH_OUTG_999\nLOC_ECOM_ORG\nLOC_ECOM_250\nLOC_RTL_ORG\nLOC_RTL_STORE_001\nLOC_RTL_STORE_004\nLOC_RTL_STORE_005\nLOC_RTL_STORE_006\nLOC_RTL_STORE_007\nLOC_RTL_STORE_008\nLOC_RTL_STORE_009\nLOC_RTL_STORE_010\nLOC_RTL_STORE_011\nLOC_RTL_STORE_012\nLOC_RTL_STORE_014\nLOC_RTL_STORE_015\nLOC_RTL_STORE_016\nLOC_RTL_STORE_018\nLOC_RTL_STORE_019\nLOC_RTL_STORE_020\nLOC_RTL_STORE_021\nLOC_RTL_STORE_023\nLOC_RTL_STORE_024\nLOC_RTL_STORE_026\nLOC_RTL_STORE_027\nLOC_RTL_WH_979\nLOC_RTL_WH_985\nLOC_RTL_CHEROKEE_AVE_998\nLOC_RTL_WH_ORG\nLOC_WS_ORG\nLOC_WS_977\nLOC_WS_978"
         },
         "journalItemLine_taxCodeRef": {
             "required": false,

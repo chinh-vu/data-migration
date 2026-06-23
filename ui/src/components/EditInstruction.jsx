@@ -47,6 +47,30 @@ export default function EditInstruction() {
         if (old.values) field.values = old.values;
       }
       if (newFormat === 'date' && old.format) field.format = old.format;
+      if (old.exclusive_with) field.exclusive_with = old.exclusive_with;
+      if (old.required_if) field.required_if = old.required_if;
+      return { ...prev, template: { ...prev.template, [colName]: field } };
+    });
+    setSaveStatus(null);
+  }
+
+  function setRequiredIf(colName, condCol, condVal) {
+    setInstruction(prev => {
+      const field = { ...prev.template[colName] };
+      if (condCol) {
+        field.required_if = { column: condCol, value: condVal ?? '' };
+      } else {
+        delete field.required_if;
+      }
+      return { ...prev, template: { ...prev.template, [colName]: field } };
+    });
+    setSaveStatus(null);
+  }
+
+  function setExclusiveWith(colName, val) {
+    setInstruction(prev => {
+      const field = { ...prev.template[colName] };
+      if (val) field.exclusive_with = val; else delete field.exclusive_with;
       return { ...prev, template: { ...prev.template, [colName]: field } };
     });
     setSaveStatus(null);
@@ -163,6 +187,8 @@ export default function EditInstruction() {
                     <th>Type</th>
                     <th>Max Length / Format</th>
                     <th>List Values</th>
+                    <th>Exclusive With</th>
+                    <th>Cond. Required</th>
                     <th className="col-required">Required</th>
                   </tr>
                 </thead>
@@ -233,6 +259,44 @@ export default function EditInstruction() {
                           rows={3}
                           disabled={def.data_format !== 'list'}
                         />
+                      </td>
+
+                      <td>
+                        <select
+                          className="type-select"
+                          value={def.exclusive_with || ''}
+                          onChange={e => setExclusiveWith(name, e.target.value)}
+                        >
+                          <option value="">— none —</option>
+                          {columns
+                            .filter(([n]) => n !== name)
+                            .map(([n]) => <option key={n} value={n}>{n}</option>)}
+                        </select>
+                      </td>
+
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <select
+                            className="type-select"
+                            value={def.required_if?.column || ''}
+                            onChange={e => setRequiredIf(name, e.target.value, def.required_if?.value || '')}
+                          >
+                            <option value="">— none —</option>
+                            {columns
+                              .filter(([n]) => n !== name)
+                              .map(([n]) => <option key={n} value={n}>{n}</option>)}
+                          </select>
+                          {def.required_if?.column && (
+                            <input
+                              className="length-input"
+                              type="text"
+                              placeholder="when ="
+                              value={def.required_if.value || ''}
+                              onChange={e => setRequiredIf(name, def.required_if.column, e.target.value)}
+                              style={{ width: '100%', textAlign: 'left' }}
+                            />
+                          )}
+                        </div>
                       </td>
 
                       <td className="col-required">

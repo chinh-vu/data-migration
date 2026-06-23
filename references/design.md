@@ -61,8 +61,11 @@ The UI is a five-tab single-page application.
 | ID | Requirement |
 | --- | --- |
 | FR-11 | Display all columns from the selected instruction file in an editable table. |
-| FR-12 | Allow changing `data_format` per column: `string`, `boolean`, or `list`. |
-| FR-13 | Allow setting a numeric max length for `string` fields. |
+| FR-12 | Allow changing `data_format` per column: `string`, `boolean`, `list`, `number`, `double`, `date`. |
+| FR-13 | For `string` fields: allow setting a numeric max length and an optional regex pattern (`format`). Both are optional and independent. |
+| FR-13a | For `date` fields: allow setting a date format string (`format`), e.g. `MM/DD/YYYY` or `MMDDYYYY`. |
+| FR-13b | Allow setting an `exclusive_with` column per field: a dropdown of other column names. If set, validation errors when both columns are non-empty. |
+| FR-13c | Allow setting a `required_if` condition per field: a condition column and a trigger value. The field becomes required only when the condition column equals the trigger value (case-insensitive). |
 | FR-14 | Show a textarea for `list` fields to enter allowed values, one per line. Non-list fields show the textarea as disabled with explanatory placeholder text. |
 | FR-15 | Allow toggling `required` per column. |
 | FR-16 | Allow editing the data file path (`file` key). |
@@ -75,8 +78,9 @@ The UI is a five-tab single-page application.
 | --- | --- |
 | FR-19 | Allow selecting an instruction JSON from the server-side list. |
 | FR-20 | Allow uploading a data file (.xlsx, .xls, .xlsm, .csv) for validation. |
-| FR-21 | The server validates every row against every column in the instruction JSON. |
-| FR-22 | Validation result is `PASSED` (no errors) or `FAILED` (error count + details). |
+| FR-21 | The server validates every row against every column in the instruction JSON. Columns are matched by **position** (index), not by header label. |
+| FR-21a | If a data file header label at position i differs from the instruction column name at position i, a **warning** is produced (not an error). Warnings are shown in the UI and recorded in a `HEADER WARNINGS` section at the top of the log file. |
+| FR-22 | Validation result is `PASSED` (no errors) or `FAILED` (error count + details). Warnings may be present in either case. |
 | FR-23 | An error log is written only when at least one error exists. |
 | FR-24 | The error log filename includes a timestamp: `<datafile>_error_YYYYMMDD_HHMMSS.logging`. Each run creates a new file; previous logs are retained. |
 
@@ -88,8 +92,14 @@ The UI is a five-tab single-page application.
 | FR-26 | A `required: true` boolean field that is empty → `boolean field is required and must be true or false`. |
 | FR-27 | A boolean field with an unrecognised value → `expected boolean (true/false/yes/no/1/0)`. Recognised values: `true false yes no t f 1 0` (case-insensitive). |
 | FR-28 | A `string` field whose value length exceeds `length` → `value length N exceeds max M`. |
+| FR-28a | A `string` field with a `format` regex whose value does not match → `does not match required pattern (…)`. Invalid regex in the instruction is silently skipped. |
 | FR-29 | A `list` field with a `values` constraint whose value is not in the list → `expected one of: <values>`. Comparison is case-insensitive and trims whitespace. If `values` is absent, any non-empty value is accepted. |
-| FR-30 | A `required: true` column that is entirely absent from the data file → schema-level error; every row is logged with `(column not in file)`. |
+| FR-29a | A `number` field with a non-integer value → `expected an integer number`. |
+| FR-29b | A `double` field with a non-numeric value → `expected a numeric value`. |
+| FR-29c | A `date` field with a value that fails date parsing → `expected a valid date [in format X]`. Date format tokens: `YYYY`, `MM`, `DD`, `YY`, `M`, `D`. Separator characters `/` `-` `.` are auto-detected; formats without separators (e.g. `MMDDYYYY`) are parsed positionally by token width. |
+| FR-29d | A column with `exclusive_with` set and both it and the named column are non-empty → `'A' and 'B' are mutually exclusive — only one can have a value`. Defined on one column only; the constraint is not automatically bidirectional. |
+| FR-29e | A column with `required_if: { column, value }` where the condition column equals the trigger value (case-insensitive) and this field is empty → `required when 'A' is 'X'`. Evaluated independently of the `required` flag. |
+| FR-30 | A column whose position falls beyond the data file's column count → schema-level error; every row is logged with `(column not in file)`. |
 
 ### 4.5 Log Management
 
@@ -174,34 +184,67 @@ data-migration/
 {
   "file": "../samples/address.xlsx",
   "template": {
-    "Entity": {
+    "entityType": {
       "data_format": "list",
       "reference": "reference",
-      "required": false,
-      "values": "Customer\nVendor\nEmployee"
+      "required": true,
+      "values": "Person\nCompany\nPartnership"
     },
-    "Label": {
+    "contactName": {
       "data_format": "string",
-      "length": "150",
+      "length": "100",
+      "required": false,
+      "required_if": { "column": "entityType", "value": "Person" }
+    },
+    "email": {
+      "data_format": "string",
+      "format": "^[\\w.+-]+@[\\w-]+\\.[a-z]{2,}$",
+      "required": false
+    },
+    "tranDate": {
+      "data_format": "date",
+      "format": "MM/DD/YYYY",
       "required": true
     },
-    "Default Shipping": {
+    "isActive": {
       "data_format": "boolean",
       "required": true
+    },
+    "quantity": {
+      "data_format": "number",
+      "required": false
+    },
+    "debitAmount": {
+      "data_format": "double",
+      "required": false,
+      "exclusive_with": "creditAmount"
+    },
+    "creditAmount": {
+      "data_format": "double",
+      "required": false
+    },
+    "country": {
+      "data_format": "list",
+      "reference": "reference",
+      "required": false
     }
   }
 }
 ```
 
-| Field | Type | Notes |
-| --- | --- | --- |
-| `file` | string | Relative path from the JSON file to the data file. Set manually after generation. |
-| `template` | object | Map of column name → field definition. Order is preserved. |
-| `data_format` | `"string"` \| `"boolean"` \| `"list"` | Determines validation behaviour. |
-| `length` | string | Max character length. String fields only. Absent = no limit. |
-| `reference` | `"reference"` | Present on list fields parsed from templates. |
-| `values` | string | Newline-delimited list of allowed values. List fields only. Absent = any value accepted. |
-| `required` | boolean | Whether empty values are an error. Default `false`. |
+| Field | Applies to | Type | Notes |
+| --- | --- | --- | --- |
+| `file` | top-level | string | Relative path from the JSON file to the data file. Set manually after generation. |
+| `template` | top-level | object | Map of column name → field definition. Insertion order is preserved (duplicate-key-safe parser). |
+| `data_format` | all | string | `"string"` · `"boolean"` · `"list"` · `"number"` · `"double"` · `"date"` — determines validation behaviour. |
+| `required` | all | boolean | Whether an empty value is an error. Default `false`. |
+| `length` | string | string | Max character length. Absent = no limit. |
+| `format` | string | string | Regex pattern the value must match (e.g. email, phone). Invalid regex is skipped silently. |
+| `format` | date | string | Date format tokens: `YYYY` `MM` `DD` `YY` `M` `D`. Separator (`/` `-` `.`) is auto-detected; omit separator for compact formats (`MMDDYYYY`). |
+| `reference` | list | `"reference"` | Set automatically when a `*Reference` cell is detected in the template. |
+| `values` | list | string | Newline-delimited list of allowed values. Blank lines stripped on save. Absent = any non-empty value accepted. Comparison is case-insensitive. |
+| `exclusive_with` | any | string | Name of a mutually exclusive column. If this field is non-empty, the named column must be empty, and vice versa. Define on one column only. |
+| `required_if` | any | object | `{ "column": "A", "value": "X" }` — field becomes required when column A equals X (case-insensitive). Evaluated independently of `required`. |
 
 ### 5.4 Excel Template Row Mapping
 
@@ -326,8 +369,8 @@ Returns the full instruction JSON object, or `404`.
 | | |
 | --- | --- |
 | Request | `multipart/form-data` · field `dataFile` · field `instructionFile` (filename string) |
-| 200 PASSED | `{ "status": "PASSED", "errorCount": 0 }` |
-| 200 FAILED | `{ "status": "FAILED", "errorCount": N, "errors": […], "logFile": "…_error_YYYYMMDD_HHMMSS.logging" }` |
+| 200 PASSED | `{ "status": "PASSED", "errorCount": 0, "warnings": […] }` (warnings omitted when empty) |
+| 200 FAILED | `{ "status": "FAILED", "errorCount": N, "errors": […], "warnings": […], "logFile": "…_error_YYYYMMDD_HHMMSS.logging" }` (warnings omitted when empty) |
 | 400 | Missing file, unsupported format, or missing instruction |
 | 404 | Instruction file not found |
 

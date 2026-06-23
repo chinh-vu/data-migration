@@ -31,8 +31,8 @@ function extractColumns(text) {
   const body = text.slice(start, end);
   const columns = [];
 
-  // Each entry: "column name": { flat key-value pairs, no nested objects }
-  const entryRe = /"((?:[^"\\]|\\.)*)"\s*:\s*(\{[^{}]*\})/g;
+  // Each entry: "column name": { ... } — allow one level of nested objects (e.g. required_if)
+  const entryRe = /"((?:[^"\\]|\\.)*)"\s*:\s*(\{(?:[^{}]|\{[^{}]*\})*\})/g;
   let m;
   while ((m = entryRe.exec(body)) !== null) {
     const name = m[1].replace(/\\"/g, '"').replace(/\\\\/g, '\\');

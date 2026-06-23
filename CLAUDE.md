@@ -33,7 +33,7 @@ data-migration/
     App.css                      # Global styles
     components/
       GenerateInstruction.jsx    # Upload template Excel → generate instruction JSON
-      EditInstruction.jsx        # Edit instruction fields (type, length, values, required)
+      EditInstruction.jsx        # Edit instruction fields (type, length, format/regex, values, exclusive_with, required_if, required)
       ValidateData.jsx           # Upload data file + select instruction → validate
       LogViewer.jsx              # Browse, view, select and delete error log files
       AuthSettings.jsx           # Basic / OAuth 1.0 / OAuth 2.0 credential configuration
@@ -73,20 +73,30 @@ UI (Vite, port 5173) and server (nodemon, port 3001) run concurrently via `concu
 {
   "file": "../samples/address.xlsx",
   "template": {
-    "Entity": { "data_format": "list", "reference": "reference", "required": false },
-    "Label":  { "data_format": "string", "length": "150", "required": true },
+    "Entity":           { "data_format": "list", "reference": "reference", "required": false },
+    "Label":            { "data_format": "string", "length": "150", "required": true },
+    "Email":            { "data_format": "string", "format": "^[\\w.+-]+@[\\w-]+\\.[a-z]{2,}$" },
     "Default Shipping": { "data_format": "boolean", "required": true },
-    "Country": {
-      "data_format": "list",
-      "reference": "reference",
-      "required": false,
-      "values": "US\nCA\nUK"
-    }
+    "Country":          { "data_format": "list", "reference": "reference", "required": false, "values": "US\nCA\nUK" },
+    "tranDate":         { "data_format": "date", "format": "MM/DD/YYYY", "required": true },
+    "debitAmount":      { "data_format": "double", "required": false, "exclusive_with": "creditAmount" },
+    "creditAmount":     { "data_format": "double", "required": false },
+    "contactName":      { "data_format": "string", "required": false, "required_if": { "column": "entityType", "value": "Person" } }
   }
 }
 ```
 
-`values` (list fields only) is a newline-delimited string. Blank lines are stripped on save. If absent, any non-empty value is accepted.
+| Field | Applies to | Notes |
+| --- | --- | --- |
+| `data_format` | all | `string` · `boolean` · `list` · `number` · `double` · `date` |
+| `length` | string | Max character length; absent = no limit |
+| `format` | string | Regex pattern; value must match (e.g. email, phone) |
+| `format` | date | Date format string with separator (`MM/DD/YYYY`) or without (`MMDDYYYY`); tokens: `YYYY` `MM` `MMM` `DD` `YY` `M` `D`; day is optional (e.g. `MMM-YY` accepts `Jan-26`) |
+| `reference` | list | Set to `"reference"` when parsed from a `*Reference` template cell |
+| `values` | list | Newline-delimited allowed values; blank lines stripped on save; absent = any value accepted |
+| `exclusive_with` | any | Name of a mutually exclusive column — if this field is non-empty, the named column must be empty (and vice versa) |
+| `required_if` | any | `{ "column": "A", "value": "X" }` — field becomes required when column A equals X (case-insensitive) |
+| `required` | all | `false` by default |
 
 ### Excel template row mapping
 
@@ -100,7 +110,11 @@ UI (Vite, port 5173) and server (nodemon, port 3001) run concurrently via `concu
 
 ### Duplicate-key JSON parsing
 
-`JSON.parse` silently drops duplicate keys (e.g. `label` vs `Label` as distinct columns). `parseInstruction.js` uses a custom text-walker that extracts entries with a regex over raw text, preserving all keys and their insertion order.
+`JSON.parse` silently drops duplicate keys (e.g. `label` vs `Label` as distinct columns). `parseInstruction.js` uses a custom text-walker that extracts entries with a regex over raw text, preserving all keys and their insertion order. The regex supports one level of nested objects within a column definition (used by `required_if`).
+
+### Column matching
+
+Columns are matched by **position** (index), not by header name. If a data file header label differs from the instruction column name at the same position, a **warning** is produced (not an error) and validation continues using the positional value. Warnings appear in the UI and in the log file's `HEADER WARNINGS` section.
 
 ### Validation rules
 
@@ -110,8 +124,14 @@ UI (Vite, port 5173) and server (nodemon, port 3001) run concurrently via `concu
 | `required: true` boolean field is empty | `boolean field is required and must be true or false` |
 | Boolean field has unrecognised value | `expected boolean (true/false/yes/no/1/0)` |
 | String field value exceeds `length` | `value length N exceeds max M` |
+| String field value does not match `format` regex | `does not match required pattern (…)` |
 | List field value not in `values` (when set) | `expected one of: <values>` |
-| Required column absent from data file | schema error; every row logged as `(column not in file)` |
+| Number field value is not an integer | `expected an integer number` |
+| Double field value is not numeric | `expected a numeric value` |
+| Date field value fails date parse | `expected a valid date [in format X]` |
+| `exclusive_with` — both columns non-empty | `'A' and 'B' are mutually exclusive — only one can have a value` |
+| `required_if` condition met and field empty | `required when 'A' is 'X'` |
+| Required column absent from data file (position beyond file width) | schema error; every row logged as `(column not in file)` |
 
 ### Error log format
 

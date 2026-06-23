@@ -23,7 +23,7 @@
         },
         "Inactive": {
             "required": false,
-            "data_format": "boolean"
+            "data_format": "string"
         }
     }
 }
