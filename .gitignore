@@ -14,3 +14,5 @@ server/logging/
 .DS_Store
 Thumbs.db
 .env
+
+server/instructions/*.son
